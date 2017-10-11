@@ -2,10 +2,13 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 )
+
+var hadError = false
 
 func main() {
 	if len(os.Args) > 2 {
@@ -26,6 +29,9 @@ func runFile(path string) error {
 		return err
 	}
 	run(string(bytes))
+	if hadError {
+		return errors.New("Parsing failed")
+	}
 	return nil
 }
 
@@ -35,6 +41,7 @@ func runPrompt() {
 		fmt.Print("> ")
 		if scanner.Scan() {
 			run(scanner.Text())
+			hadError = false
 		}
 		if err := scanner.Err(); err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading standard input:", err)
@@ -49,4 +56,13 @@ func run(source string) {
 	for _, token := range tokens {
 		fmt.Println(token)
 	}
+}
+
+func reportError(line int, message string) {
+	report(line, "", message)
+}
+
+func report(line int, where, message string) {
+	fmt.Fprintf(os.Stderr, "[line %d] Error %s: %s\n", line, where, message)
+	hadError = true
 }
