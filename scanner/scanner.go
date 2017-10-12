@@ -2,10 +2,20 @@ package scanner
 
 import "github.com/levi/holo/token"
 
+type ScannerError struct {
+	s    string
+	Line int
+}
+
+func (e *ScannerError) Error() string {
+	return e.s
+}
+
 // Scanner scans a source file for tokens
 type Scanner struct {
 	Source string
 	Tokens []*token.Token
+	Errors []ScannerError
 
 	start   int
 	current int
@@ -56,6 +66,8 @@ func (s *Scanner) scanToken() {
 		s.addToken(token.SemicolonToken)
 	case "*":
 		s.addToken(token.StarToken)
+	default:
+		s.Errors = append(s.Errors, ScannerError{"Unexpected character", s.line})
 	}
 }
 
