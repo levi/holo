@@ -34,6 +34,40 @@ func (s *Scanner) ScanTokens() []*token.Token {
 }
 
 func (s *Scanner) scanToken() {
+	c := s.advance()
+	switch c {
+	case "(":
+		s.addToken(token.LeftParenToken)
+	case ")":
+		s.addToken(token.RightParenToken)
+	case "{":
+		s.addToken(token.LeftBraceToken)
+	case "}":
+		s.addToken(token.RightBraceToken)
+	case ",":
+		s.addToken(token.CommaToken)
+	case ".":
+		s.addToken(token.DotToken)
+	case "-":
+		s.addToken(token.MinusToken)
+	case "+":
+		s.addToken(token.PlusToken)
+	case ";":
+		s.addToken(token.SemicolonToken)
+	case "*":
+		s.addToken(token.StarToken)
+	}
+}
+
+func (s *Scanner) addToken(tokenType string) {
+	text := s.Source[s.start:s.current]
+	s.Tokens = append(s.Tokens, token.NewToken(tokenType, text, "", s.line))
+}
+
+// Advance returns the current lexeme character and increments the current offset
+func (s *Scanner) advance() string {
+	s.current++
+	return string(s.Source[s.current-1])
 }
 
 func (s *Scanner) isAtEnd() bool {
