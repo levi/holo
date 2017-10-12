@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/levi/holo/scanner"
 )
 
 var hadError = false
@@ -50,11 +52,11 @@ func runPrompt() {
 }
 
 func run(source string) {
-	scanner := NewScanner(source)
-	tokens := scanner.scanTokens()
+	s := scanner.NewScanner(source)
+	tokens := s.ScanTokens()
 
 	for _, token := range tokens {
-		fmt.Println(token)
+		fmt.Println(token.String())
 	}
 }
 
