@@ -54,6 +54,13 @@ func runPrompt() {
 func run(source string) {
 	s := scanner.NewScanner(source)
 	tokens := s.ScanTokens()
+	errors := s.Errors
+
+	if len(errors) > 0 {
+		for _, err := range errors {
+			fmt.Fprintln(os.Stderr, "Scanner error:", err)
+		}
+	}
 
 	for _, token := range tokens {
 		fmt.Println(token.String())
