@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/levi/holo/token"
@@ -128,7 +129,7 @@ func (s *Scanner) scanToken() {
 		} else if isAlpha(c) {
 			s.identifier()
 		} else {
-			s.raiseError("Unexpected character")
+			s.raiseError(fmt.Sprintf("Unexpected character: \"%s\"", c))
 		}
 	}
 }
@@ -193,26 +194,20 @@ func isAlphaNumeric(value string) bool {
 
 func isAlpha(value string) bool {
 	for _, c := range value {
-		if runeIsAlpha(c) {
-			return false
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || ('_' == c) {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func isDigit(value string) bool {
 	for _, c := range value {
-		if c < '0' || c > '9' {
-			return false
+		if c >= '0' && c <= '9' {
+			return true
 		}
 	}
-	return true
-}
-
-func runeIsAlpha(ch rune) bool {
-	return ('a' <= ch && 'z' >= ch) ||
-		('A' <= ch && 'Z' >= ch) ||
-		('_' == ch)
+	return false
 }
 
 func (s *Scanner) addToken(tokenType string) {
