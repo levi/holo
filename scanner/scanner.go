@@ -1,6 +1,29 @@
 package scanner
 
-import "github.com/levi/holo/token"
+import (
+	"strconv"
+
+	"github.com/levi/holo/token"
+)
+
+var keywords = map[string]string{
+	"and":    token.AndToken,
+	"class":  token.ClassToken,
+	"else":   token.ElseToken,
+	"false":  token.FalseToken,
+	"for":    token.ForToken,
+	"fn":     token.FnToken,
+	"if":     token.IfToken,
+	"nil":    token.NilToken,
+	"or":     token.OrToken,
+	"print":  token.PrintToken,
+	"return": token.ReturnToken,
+	"self":   token.SelfToken,
+	"super":  token.SuperToken,
+	"true":   token.TrueToken,
+	"var":    token.VarToken,
+	"while":  token.WhileToken,
+}
 
 // Scanner scans a source file for tokens
 type Scanner struct {
@@ -89,14 +112,121 @@ func (s *Scanner) scanToken() {
 		} else {
 			s.addToken(token.SlashToken)
 		}
+	case "\"":
+		s.string()
+	case " ":
+	case "\r":
+	case "\t":
+		// Ignore whitespace
+		break
+	case "\n":
+		s.line++
+		break
 	default:
-		s.Errors = append(s.Errors, ScannerError{"Unexpected character", s.line})
+		if isDigit(c) {
+			s.number()
+		} else if isAlpha(c) {
+			s.identifier()
+		} else {
+			s.raiseError("Unexpected character")
+		}
 	}
 }
 
+func (s *Scanner) string() {
+	for s.peek() != "\"" && !s.isAtEnd() {
+		if s.peek() == "\n" {
+			s.line++
+		}
+		s.advance()
+	}
+
+	if s.isAtEnd() {
+		s.raiseError("Unterminated string")
+		return
+	}
+
+	// consume the closing "
+	s.advance()
+
+	value := s.Source[s.start+1 : s.cursor-1]
+	s.addTokenLiteral(token.StringToken, value)
+}
+
+func (s *Scanner) number() {
+	for isDigit(s.peek()) {
+		s.advance()
+	}
+
+	if s.peek() == "." && isDigit(s.peekNext()) {
+		s.advance() // consume the .
+		for isDigit(s.peek()) {
+			s.advance()
+		}
+	}
+
+	n, err := strconv.ParseFloat(s.Source[s.start:s.cursor], 64)
+	if err != nil {
+		s.raiseError("Failed to parse number literal")
+		return
+	}
+
+	s.addTokenLiteral(token.NumberToken, n)
+}
+
+func (s *Scanner) identifier() {
+	for isAlphaNumeric(s.peek()) {
+		s.advance()
+	}
+
+	value := s.Source[s.start:s.cursor]
+	if t, ok := keywords[value]; ok {
+		s.addToken(t)
+	} else {
+		s.addToken(token.IdentifierToken)
+	}
+}
+
+func isAlphaNumeric(value string) bool {
+	return isAlpha(value) || isDigit(value)
+}
+
+func isAlpha(value string) bool {
+	for _, c := range value {
+		if runeIsAlpha(c) {
+			return false
+		}
+	}
+	return true
+}
+
+func isDigit(value string) bool {
+	for _, c := range value {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func runeIsAlpha(ch rune) bool {
+	return ('a' <= ch && 'z' >= ch) ||
+		('A' <= ch && 'Z' >= ch) ||
+		('_' == ch)
+}
+
 func (s *Scanner) addToken(tokenType string) {
+	s.addTokenLiteral(tokenType, nil)
+}
+
+func (s *Scanner) addTokenLiteral(tokenType string, literal interface{}) {
 	text := s.Source[s.start:s.cursor]
-	s.Tokens = append(s.Tokens, token.NewToken(tokenType, text, "", s.line))
+	s.Tokens = append(s.Tokens, token.NewToken(tokenType, text, literal, s.line))
+}
+
+// raiseError appends an error with description at the current line to the Errors slice
+func (s *Scanner) raiseError(description string) {
+	s.Errors = append(s.Errors, ScannerError{description, s.line})
 }
 
 // Advance returns the current lexeme character and increments the cursor offset
@@ -105,7 +235,7 @@ func (s *Scanner) advance() string {
 	return string(s.Source[s.cursor-1])
 }
 
-// Match identifies if the current character is the expected, advancing the cursor when positive
+// Match identifies if the current character is the expected, advancing the cursor when match succeeds
 func (s *Scanner) match(expected string) bool {
 	if s.isAtEnd() {
 		return false
@@ -118,6 +248,7 @@ func (s *Scanner) match(expected string) bool {
 	return true
 }
 
+// Peek provides a lookahead of 1 of the current cursor position without advancing
 func (s *Scanner) peek() string {
 	if s.isAtEnd() {
 		return "\x00"
@@ -125,6 +256,18 @@ func (s *Scanner) peek() string {
 	return string(s.Source[s.cursor])
 }
 
+// peekNext provides a lookahead of 1 beyond the current cursor position without advancing
+func (s *Scanner) peekNext() string {
+	next := s.cursor + 1
+
+	if next >= len(s.Source) {
+		return "\x00"
+	}
+
+	return string(s.Source[next])
+}
+
+// isAtEnd determines if the cursor position is beyond the source's bounds
 func (s *Scanner) isAtEnd() bool {
 	return s.cursor >= len(s.Source)
 }
