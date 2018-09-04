@@ -1,14 +1,18 @@
 package holo
 
+import (
+    "github.com/levi/holo/token"
+)
+
 type Expr interface {}
 
 type Binary struct {
     left Expr{}
-    operation Token
+    operation token.Token
     right Expr{}
 }
 
-func NewBinary(left Expr{}, operation Token, right Expr{}) *Binary {
+func NewBinary(left Expr{}, operation token.Token, right Expr{}) *Binary {
     n = new(Binary)
     n.left = left
     n.operation = operation
@@ -27,21 +31,21 @@ func NewGrouping(expression Expr{}) *Grouping {
 }
 
 type Literal struct {
-    value Object
+    value interface{}
 }
 
-func NewLiteral(value Object) *Literal {
+func NewLiteral(value interface{}) *Literal {
     n = new(Literal)
     n.value = value
     return n
 }
 
 type Unary struct {
-    operation Token
+    operation token.Token
     right Expr{}
 }
 
-func NewUnary(operation Token, right Expr{}) *Unary {
+func NewUnary(operation token.Token, right Expr{}) *Unary {
     n = new(Unary)
     n.operation = operation
     n.right = right

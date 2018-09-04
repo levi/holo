@@ -16,10 +16,10 @@ func main() {
 
 	outputDir := os.Args[1]
 	err := defineAst(outputDir, "Expr", []string{
-		"Binary		: left Expr, operation Token, right Expr",
+		"Binary		: left Expr, operation token.Token, right Expr",
 		"Grouping	: expression Expr",
-		"Literal	: value Object",
-		"Unary		: operation Token, right Expr",
+		"Literal	: value interface{}",
+		"Unary		: operation token.Token, right Expr",
 	})
 
 	if err != nil {
@@ -38,6 +38,12 @@ func defineAst(outputDir, baseName string, types []string) error {
 
 	f.WriteString("package holo\n")
 	f.WriteString("\n")
+
+	f.WriteString("import (\n")
+	f.WriteString("    \"github.com/levi/holo/token\"\n")
+	f.WriteString(")\n")
+	f.WriteString("\n")
+
 	f.WriteString(fmt.Sprintf("type %s interface {}\n", baseName))
 	f.WriteString("\n")
 
@@ -57,12 +63,8 @@ func defineType(f *os.File, baseName, className, fields string) {
 	f.WriteString(fmt.Sprintf("type %s struct {\n", className))
 	fieldList := strings.Split(fields, ", ")
 	for _, field := range fieldList {
-		parts := strings.Split(field, " ")
-		argType := parts[1]
-		if argType == baseName {
-			argType = fmt.Sprintf("%s{}", baseName)
-		}
-		f.WriteString(fmt.Sprintf("    %s %s\n", parts[0], argType))
+		name, argType := fieldParts(field, baseName)
+		f.WriteString(fmt.Sprintf("    %s %s\n", name, argType))
 	}
 	f.WriteString("}\n")
 	f.WriteString("\n")
@@ -71,12 +73,8 @@ func defineType(f *os.File, baseName, className, fields string) {
 
 	arguments := []string{}
 	for _, field := range fieldList {
-		parts := strings.Split(field, " ")
-		name := strcase.ToLowerCamel(parts[0])
-		argType := parts[1]
-		if argType == baseName {
-			argType = fmt.Sprintf("%s{}", baseName)
-		}
+		name, argType := fieldParts(field, baseName)
+		name = strcase.ToLowerCamel(name)
 		arguments = append(arguments, fmt.Sprintf("%s %s", name, argType))
 	}
 	f.WriteString(strings.Join(arguments, ", "))
@@ -84,11 +82,22 @@ func defineType(f *os.File, baseName, className, fields string) {
 
 	f.WriteString(fmt.Sprintf("    n = new(%s)\n", className))
 	for _, field := range fieldList {
-		name := strings.Split(field, " ")[0]
+		name, _ := fieldParts(field, baseName)
 		f.WriteString(fmt.Sprintf("    n.%s = %s\n", name, strcase.ToLowerCamel(name)))
 	}
 	f.WriteString("    return n\n")
 
 	f.WriteString("}\n")
 	f.WriteString("\n")
+}
+
+func fieldParts(field, baseName string) (string, string) {
+	parts := strings.Split(field, " ")
+
+	argType := parts[1]
+	if argType == baseName {
+		argType = fmt.Sprintf("%s{}", baseName)
+	}
+
+	return parts[0], argType
 }
