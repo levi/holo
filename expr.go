@@ -1,4 +1,4 @@
-package holo
+package main
 
 import (
     "github.com/levi/holo/token"
@@ -7,13 +7,13 @@ import (
 type Expr interface {}
 
 type Binary struct {
-    left Expr{}
-    operation token.Token
-    right Expr{}
+    left Expr
+    operation *token.Token
+    right Expr
 }
 
-func NewBinary(left Expr{}, operation token.Token, right Expr{}) *Binary {
-    n = new(Binary)
+func NewBinary(left Expr, operation *token.Token, right Expr) *Binary {
+    n := new(Binary)
     n.left = left
     n.operation = operation
     n.right = right
@@ -21,11 +21,11 @@ func NewBinary(left Expr{}, operation token.Token, right Expr{}) *Binary {
 }
 
 type Grouping struct {
-    expression Expr{}
+    expression Expr
 }
 
-func NewGrouping(expression Expr{}) *Grouping {
-    n = new(Grouping)
+func NewGrouping(expression Expr) *Grouping {
+    n := new(Grouping)
     n.expression = expression
     return n
 }
@@ -35,18 +35,18 @@ type Literal struct {
 }
 
 func NewLiteral(value interface{}) *Literal {
-    n = new(Literal)
+    n := new(Literal)
     n.value = value
     return n
 }
 
 type Unary struct {
-    operation token.Token
-    right Expr{}
+    operation *token.Token
+    right Expr
 }
 
-func NewUnary(operation token.Token, right Expr{}) *Unary {
-    n = new(Unary)
+func NewUnary(operation *token.Token, right Expr) *Unary {
+    n := new(Unary)
     n.operation = operation
     n.right = right
     return n

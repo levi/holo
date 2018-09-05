@@ -36,7 +36,7 @@ func defineAst(outputDir, baseName string, types []string) error {
 	}
 	defer f.Close()
 
-	f.WriteString("package holo\n")
+	f.WriteString("package main\n")
 	f.WriteString("\n")
 
 	f.WriteString("import (\n")
@@ -80,7 +80,7 @@ func defineType(f *os.File, baseName, className, fields string) {
 	f.WriteString(strings.Join(arguments, ", "))
 	f.WriteString(fmt.Sprintf(") *%s {\n", className))
 
-	f.WriteString(fmt.Sprintf("    n = new(%s)\n", className))
+	f.WriteString(fmt.Sprintf("    n := new(%s)\n", className))
 	for _, field := range fieldList {
 		name, _ := fieldParts(field, baseName)
 		f.WriteString(fmt.Sprintf("    n.%s = %s\n", name, strcase.ToLowerCamel(name)))
@@ -93,11 +93,9 @@ func defineType(f *os.File, baseName, className, fields string) {
 
 func fieldParts(field, baseName string) (string, string) {
 	parts := strings.Split(field, " ")
-
 	argType := parts[1]
-	if argType == baseName {
-		argType = fmt.Sprintf("%s{}", baseName)
+	if argType != "interface{}" && argType != baseName {
+		argType = "*" + argType
 	}
-
 	return parts[0], argType
 }
