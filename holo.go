@@ -7,7 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/levi/holo/expr"
+	"github.com/levi/holo/parser"
 	"github.com/levi/holo/scanner"
+	"github.com/levi/holo/token"
 )
 
 var hadError = false
@@ -65,10 +68,29 @@ func run(source string) {
 	for _, token := range tokens {
 		fmt.Println(token.String())
 	}
+
+	p := parser.NewParser(tokens)
+	expression, err := p.Parse()
+
+	if err, ok := err.(*parser.ParseError); ok {
+		reportParseError(*err)
+		return
+	}
+
+	fmt.Println(expression.(expr.AstPrinter).ToString())
 }
 
 func reportError(line int, message string) {
 	report(line, "", message)
+}
+
+func reportParseError(err parser.ParseError) {
+	t := err.Token
+	if t.TokenType == token.EOFToken {
+		report(t.Line, " at end", err.Message)
+	} else {
+		report(t.Line, " at '"+t.Lexeme+"'", err.Message)
+	}
 }
 
 func report(line int, where, message string) {

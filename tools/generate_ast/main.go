@@ -36,7 +36,7 @@ func defineAst(outputDir, baseName string, types []string) error {
 	}
 	defer f.Close()
 
-	f.WriteString("package main\n")
+	f.WriteString("package expr\n")
 	f.WriteString("\n")
 
 	f.WriteString("import (\n")
@@ -45,6 +45,7 @@ func defineAst(outputDir, baseName string, types []string) error {
 	f.WriteString("\n")
 
 	f.WriteString(fmt.Sprintf("type %s interface {}\n", baseName))
+	f.WriteString("\n")
 	f.WriteString("\n")
 
 	for _, langType := range types {
@@ -78,14 +79,14 @@ func defineType(f *os.File, baseName, className, fields string) {
 		arguments = append(arguments, fmt.Sprintf("%s %s", name, argType))
 	}
 	f.WriteString(strings.Join(arguments, ", "))
-	f.WriteString(fmt.Sprintf(") *%s {\n", className))
+	f.WriteString(fmt.Sprintf(") %s {\n", className))
 
-	f.WriteString(fmt.Sprintf("    n := new(%s)\n", className))
+	f.WriteString(fmt.Sprintf("    return %s{\n", className))
 	for _, field := range fieldList {
 		name, _ := fieldParts(field, baseName)
-		f.WriteString(fmt.Sprintf("    n.%s = %s\n", name, strcase.ToLowerCamel(name)))
+		f.WriteString(fmt.Sprintf("        %s,\n", strcase.ToLowerCamel(name)))
 	}
-	f.WriteString("    return n\n")
+	f.WriteString("    }\n")
 
 	f.WriteString("}\n")
 	f.WriteString("\n")
@@ -93,9 +94,5 @@ func defineType(f *os.File, baseName, className, fields string) {
 
 func fieldParts(field, baseName string) (string, string) {
 	parts := strings.Split(field, " ")
-	argType := parts[1]
-	if argType != "interface{}" && argType != baseName {
-		argType = "*" + argType
-	}
-	return parts[0], argType
+	return parts[0], parts[1]
 }

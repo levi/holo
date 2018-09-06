@@ -1,4 +1,4 @@
-package main
+package expr
 
 import "fmt"
 
@@ -6,22 +6,22 @@ type AstPrinter interface {
 	ToString() string
 }
 
-func (b *Binary) ToString() string {
+func (b Binary) ToString() string {
 	return parenthesize(b.operation.Lexeme, b.left, b.right)
 }
 
-func (g *Grouping) ToString() string {
+func (g Grouping) ToString() string {
 	return parenthesize("group", g.expression)
 }
 
-func (l *Literal) ToString() string {
+func (l Literal) ToString() string {
 	if l.value == nil {
 		return "null"
 	}
 	return fmt.Sprintf("%v", l.value)
 }
 
-func (u *Unary) ToString() string {
+func (u Unary) ToString() string {
 	return parenthesize(u.operation.Lexeme, u.right)
 }
 
