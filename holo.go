@@ -14,6 +14,7 @@ import (
 )
 
 var hadError = false
+var hadRuntimeError = false
 
 func main() {
 	if len(os.Args) > 2 {
@@ -35,7 +36,10 @@ func runFile(path string) error {
 	}
 	run(string(bytes))
 	if hadError {
-		return errors.New("Parsing failed")
+		return errors.New("Parsing error")
+	}
+	if hadRuntimeError {
+		return errors.New("Runtime error")
 	}
 	return nil
 }
@@ -45,7 +49,11 @@ func runPrompt() {
 	for {
 		fmt.Print("> ")
 		if scanner.Scan() {
-			run(scanner.Text())
+			text := scanner.Text()
+			if text == "exit" {
+				os.Exit(0)
+			}
+			run(text)
 			hadError = false
 		}
 		if err := scanner.Err(); err != nil {
@@ -77,7 +85,13 @@ func run(source string) {
 		return
 	}
 
-	fmt.Println(expression.(expr.AstPrinter).ToString())
+	out, err := expr.Interpret(expression)
+	if err, ok := err.(*expr.RuntimeError); ok {
+		reportRuntimeError(*err)
+		return
+	}
+
+	fmt.Println(out)
 }
 
 func reportError(line int, message string) {
@@ -96,4 +110,9 @@ func reportParseError(err parser.ParseError) {
 func report(line int, where, message string) {
 	fmt.Fprintf(os.Stderr, "[line %d] Error %s: %s\n", line, where, message)
 	hadError = true
+}
+
+func reportRuntimeError(err expr.RuntimeError) {
+	fmt.Fprintf(os.Stderr, "%s\n[line %d]\n", err.Message, err.Token.Line)
+	hadRuntimeError = true
 }
