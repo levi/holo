@@ -78,20 +78,18 @@ func run(source string) {
 	}
 
 	p := parser.NewParser(tokens)
-	expression, err := p.Parse()
+	statements, err := p.Parse()
 
 	if err, ok := err.(*parser.ParseError); ok {
 		reportParseError(*err)
 		return
 	}
 
-	out, err := expr.Interpret(expression)
+	err = expr.Interpret(statements)
 	if err, ok := err.(*expr.RuntimeError); ok {
 		reportRuntimeError(*err)
 		return
 	}
-
-	fmt.Println(out)
 }
 
 func reportError(line int, message string) {

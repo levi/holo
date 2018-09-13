@@ -19,8 +19,41 @@ func NewParser(tokens []*token.Token) *Parser {
 }
 
 // Parse parses the token sequence
-func (p *Parser) Parse() (expr.Expr, error) {
-	return p.expression()
+func (p *Parser) Parse() ([]expr.Stmt, error) {
+	var statements []expr.Stmt
+	for !p.isAtEnd() {
+		statement, err := p.statement()
+		if err != nil {
+			return statements, err
+		}
+		statements = append(statements, statement)
+	}
+	return statements, nil
+}
+
+func (p *Parser) statement() (expr.Expr, error) {
+	if p.match(token.PrintToken) {
+		return p.printStatement()
+	}
+	return p.expressionStatement()
+}
+
+func (p *Parser) expressionStatement() (expr.Stmt, error) {
+	value, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	p.consume(token.SemicolonToken, "Expected ';' after value.")
+	return expr.NewExpression(value), nil
+}
+
+func (p *Parser) printStatement() (expr.Stmt, error) {
+	value, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	p.consume(token.SemicolonToken, "Expected ';' after value.")
+	return expr.NewPrint(value), nil
 }
 
 func (p *Parser) expression() (expr.Expr, error) {

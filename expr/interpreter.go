@@ -10,12 +10,19 @@ type Interpreter interface {
 	ToValue() (interface{}, error)
 }
 
-func Interpret(expression Expr) (string, error) {
-	value, err := evaluate(expression)
-	if err != nil {
-		return "", err
+func Interpret(statements []Stmt) error {
+	for _, s := range statements {
+		err := execute(s)
+		if err != nil {
+			return err
+		}
 	}
-	return stringify(value), nil
+	return nil
+}
+
+func execute(statement Stmt) error {
+	_, err := statement.(Interpreter).ToValue()
+	return err
 }
 
 func stringify(value interface{}) string {
@@ -23,6 +30,20 @@ func stringify(value interface{}) string {
 		return "nil"
 	}
 	return fmt.Sprintf("%v", value)
+}
+
+func (e Expression) ToValue() (interface{}, error) {
+	_, err := evaluate(e.expression)
+	return nil, err
+}
+
+func (p Print) ToValue() (interface{}, error) {
+	value, err := evaluate(p.expression)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(stringify(value))
+	return nil, nil
 }
 
 func (l Literal) ToValue() (interface{}, error) {

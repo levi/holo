@@ -25,6 +25,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = defineAst(outputDir, "Stmt", []string{
+		"Expression : expression Expr",
+		"Print      : expression Expr",
+	})
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func defineAst(outputDir, baseName string, types []string) error {
@@ -39,10 +48,20 @@ func defineAst(outputDir, baseName string, types []string) error {
 	f.WriteString("package expr\n")
 	f.WriteString("\n")
 
-	f.WriteString("import (\n")
-	f.WriteString("    \"github.com/levi/holo/token\"\n")
-	f.WriteString(")\n")
-	f.WriteString("\n")
+	needsImport := false
+	for _, t := range types {
+		if strings.Contains(t, "token.") {
+			needsImport = true
+			break
+		}
+	}
+
+	if needsImport {
+		f.WriteString("import (\n")
+		f.WriteString("    \"github.com/levi/holo/token\"\n")
+		f.WriteString(")\n")
+		f.WriteString("\n")
+	}
 
 	f.WriteString(fmt.Sprintf("type %s interface {}\n", baseName))
 	f.WriteString("\n")
